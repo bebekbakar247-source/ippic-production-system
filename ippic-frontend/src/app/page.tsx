@@ -38,22 +38,25 @@ export default function Home() {
   const [rekomendasiFinansial, setRekomendasiFinansial] = useState('');
   const [isAnalisis, setIsAnalisis] = useState(false);
 
+  // URL BACKEND HUGGING FACE FINAL
+  const API_URL = 'https://raihanr247-ippic-backend-api.hf.space';
+
   const fetchDashboardData = async () => {
     try {
       const [rEws, rProd, rVend] = await Promise.all([
-        axios.get('http://127.0.0.1:8000/api/dashboard-ews'),
-        axios.get('http://127.0.0.1:8000/api/produk-jadi'),
-        axios.get('http://127.0.0.1:8000/api/vendor-kontak')
+        axios.get(`${API_URL}/api/dashboard-ews`),
+        axios.get(`${API_URL}/api/produk-jadi`),
+        axios.get(`${API_URL}/api/vendor-kontak`)
       ]);
       setEwsData(rEws.data); setProdukJadi(rProd.data); setVendorList(rVend.data);
     } catch (e) { 
-      console.log("Sinkronisasi offline: Menunggu restrukturisasi jaringan API lokal."); 
+      console.log("Sinkronisasi offline: Menunggu restrukturisasi jaringan API cloud."); 
     }
   };
 
   useEffect(() => { fetchDashboardData(); }, []);
 
-  // Perbaikan Modul Pemindaian Barcode Kamera
+  // Modul Pemindaian Barcode Kamera
   useEffect(() => {
     if (activeTab === 'scanner') {
       const scanner = new Html5QrcodeScanner("reader", { qrbox: { width: 250, height: 250 }, fps: 5 }, false);
@@ -61,12 +64,12 @@ export default function Home() {
         async (decodedText) => {
           scanner.clear().catch(e => console.log(e));
           try {
-            const res = await axios.post('http://127.0.0.1:8000/api/scan-barcode', { kode_produk: decodedText });
+            const res = await axios.post(`${API_URL}/api/scan-barcode`, { kode_produk: decodedText });
             if (res.data.status === 'sukses') {
               alert(`🖨️ Pemindaian Berhasil: ${res.data.pesan}`);
               fetchDashboardData(); 
             } else { alert("❌ SKU Material tidak terdaftar di sistem cloud."); }
-          } catch (e) { alert("Kegagalan menangkap respon server internal."); }
+          } catch (e) { alert("Kegagalan menangkap respon server AI."); }
         },
         (error) => { /* Silently catch alignment loss */ }
       );
@@ -78,7 +81,7 @@ export default function Home() {
     setIsForecasting(true);
     try {
       const payload = { histori_permintaan: historiInput.split(',').map(n => parseInt(n.trim())), periode_prediksi: 4, metode_ai: metodeForecast };
-      const res = await axios.post('http://127.0.0.1:8000/api/forecast', payload);
+      const res = await axios.post(`${API_URL}/api/forecast`, payload);
       const chartData = payload.histori_permintaan.map((val, i) => ({ minggu: `M-${i+1}`, aktual: val, prediksi: null }))
         .concat(res.data.prediksi.map((val:number, i:number) => ({ minggu: `F-${i+1}`, aktual: null, prediksi: val })));
       setForecastResult({ chart: chartData, insight: res.data.insight_ai });
@@ -93,14 +96,13 @@ export default function Home() {
     setIsCalculating(true);
     try {
       const payload = { id_barang_jadi: Number(selectedProduk), permintaan_pesanan: kebutuhanKotor.split(',').map(n => parseInt(n.trim())), metode: metode, scrap_factor: Number(scrapFactor) / 100, h_cost: Number(hCost), s_cost: Number(sCost), lead_time: 1, teks_kendala: teksKendala };
-      const response = await axios.post('http://127.0.0.1:8000/api/hitung-mrp-komprehensif', payload);
+      const response = await axios.post(`${API_URL}/api/hitung-mrp-komprehensif`, payload);
       setMrpResult(response.data);
       setRekomendasiFinansial(''); 
     } catch (e) { alert("❌ Kegagalan kalkulasi matrik algoritma MRP."); }
     setIsCalculating(false);
   };
 
-  // DEFINISI KEMBALI SCORING FUNCTION UNTUK PENGIRIMAN WHATSAPP GATEWAY
   const handleKirimWA = (bahan: string, plan_release: number[], hp: string) => {
     let msg = `*PURCHASE ORDER AUTOMATION SYSTEM*\n*CV SANDY GRAPHIA*\n\nYth. Vendor Logistik,\nKami merilis jadwal pengadaan material untuk *${bahan}*:\n`;
     plan_release.forEach((qty, i) => { if(qty > 0) msg += `- Periode Minggu ${i+1}: *${qty} Unit*\n`; });
@@ -113,7 +115,7 @@ export default function Home() {
     setIsAnalisis(true);
     try {
       const payload = { matrix: JSON.stringify(mrpResult.perbandingan_ekotek) };
-      const res = await axios.post('http://127.0.0.1:8000/api/analisis-finansial', payload);
+      const res = await axios.post(`${API_URL}/api/analisis-finansial`, payload);
       setRekomendasiFinansial(res.data.rekomendasi);
     } catch (e) { alert("Koneksi AI Advisor terputus."); }
     setIsAnalisis(false);
@@ -131,7 +133,6 @@ export default function Home() {
       {/* SIDEBAR PANEL */}
       <div className={`bg-zinc-950/80 backdrop-blur-xl w-72 flex flex-col border-r border-zinc-800/80 transition-transform z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full absolute h-full'}`}>
         <div className="p-6 border-b border-zinc-800/80 flex flex-col items-center">
-          {/* SINKRONISASI JALUR EKSTENSI LOGO PERUSAHAAN */}
           <div className="w-24 h-24 bg-white rounded-full p-1.5 mb-3 flex items-center justify-center overflow-hidden border border-zinc-800">
             <img src="/logo-sandygraphia.jpeg" alt="Logo" className="w-full h-full object-contain rounded-full" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/150/ffffff/000000?text=SANDY+GRAPHIA'; }} />
           </div>
@@ -161,7 +162,7 @@ export default function Home() {
             <button onClick={fetchDashboardData} className="flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-white bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800"><RefreshCw size={14}/> Sync Data</button>
             <div className={`px-4 py-1.5 ${ewsData ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'} border rounded-full text-xs font-semibold flex items-center gap-2`}>
               <span className="relative flex h-2 w-2"><span className={`relative inline-flex rounded-full h-2 w-2 ${ewsData ? 'bg-emerald-500' : 'bg-red-500'}`}></span></span> 
-              {ewsData ? 'PostgreSQL Cloud Connected' : 'Local Node Disconnected'}
+              {ewsData ? 'PostgreSQL Cloud Connected' : 'AI Node Disconnected'}
             </div>
           </div>
         </header>
@@ -179,7 +180,7 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl"><h3 className="text-zinc-400 text-sm mb-2">Total SKU Bahan</h3><p className="text-4xl font-black text-white">{ewsData?.total_item || 0} Item</p></div>
                 <div className="bg-red-950/10 border border-red-900/30 p-6 rounded-2xl"><h3 className="text-red-400 text-sm mb-2">Peringatan Kritis EWS</h3><p className="text-4xl font-black text-red-500">{ewsData?.item_kritis || 0} SKU Defisit</p></div>
-                <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl"><h3 className="text-zinc-400 text-sm mb-2">Sinkronisasi Jaringan</h3><p className="text-2xl font-bold text-emerald-400 mt-2">Optimal (0ms Delay)</p></div>
+                <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl"><h3 className="text-zinc-400 text-sm mb-2">Sinkronisasi Jaringan</h3><p className="text-2xl font-bold text-emerald-400 mt-2">Optimal (Hugging Face)</p></div>
               </div>
 
               <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-8">
