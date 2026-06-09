@@ -38,7 +38,7 @@ export default function Home() {
   const [rekomendasiFinansial, setRekomendasiFinansial] = useState('');
   const [isAnalisis, setIsAnalisis] = useState(false);
 
-  // URL BACKEND HUGGING FACE FINAL
+  // URL BACKEND HUGGING FACE PRODUCTION RESOLVER (Pipa Data Murni)
   const API_URL = 'https://raihanr247-ippic-backend-api.hf.space';
 
   const fetchDashboardData = async () => {
@@ -77,31 +77,51 @@ export default function Home() {
     }
   }, [activeTab]);
 
-  const handleForecast = async () => {
-    setIsForecasting(true);
-    try {
-      const payload = { histori_permintaan: historiInput.split(',').map(n => parseInt(n.trim())), periode_prediksi: 4, metode_ai: metodeForecast };
-      const res = await axios.post(`${API_URL}/api/forecast`, payload);
+const handleForecast = async () => {
+  setIsForecasting(true);
+  try {
+    const payload = { 
+      histori_permintaan: historiInput.split(',').map(n => parseInt(n.trim())), 
+      periode_prediksi: 4, 
+      metode_ai: metodeForecast 
+    };
+    const res = await axios.post(`${API_URL}/api/forecast`, payload);
+
+    if (res.data && res.data.prediksi) {
       const chartData = payload.histori_permintaan.map((val, i) => ({ minggu: `M-${i+1}`, aktual: val, prediksi: null }))
-        .concat(res.data.prediksi.map((val:number, i:number) => ({ minggu: `F-${i+1}`, aktual: null, prediksi: val })));
+        .concat(res.data.prediksi.map((val: number, i: number) => ({ minggu: `F-${i+1}`, aktual: null, prediksi: val })));
       setForecastResult({ chart: chartData, insight: res.data.insight_ai });
       setKebutuhanKotor(res.data.prediksi.join(', '));
-    } catch (e) { 
-      alert("⚠️ Gangguan sambungan modul kecerdasan buatan."); 
     }
-    setIsForecasting(false);
-  };
+  } catch (e: any) { 
+    alert("⚠️ Gangguan sambungan modul kecerdasan buatan: " + (e.response?.data?.detail || e.message)); 
+  }
+  setIsForecasting(false);
+};
 
-  const handleHitungMRP = async () => {
-    setIsCalculating(true);
-    try {
-      const payload = { id_barang_jadi: Number(selectedProduk), permintaan_pesanan: kebutuhanKotor.split(',').map(n => parseInt(n.trim())), metode: metode, scrap_factor: Number(scrapFactor) / 100, h_cost: Number(hCost), s_cost: Number(sCost), lead_time: 1, teks_kendala: teksKendala };
-      const response = await axios.post(`${API_URL}/api/hitung-mrp-komprehensif`, payload);
+const handleHitungMRP = async () => {
+  setIsCalculating(true);
+  try {
+    const payload = { 
+      id_barang_jadi: Number(selectedProduk), 
+      permintaan_pesanan: kebutuhanKotor.split(',').map(n => parseInt(n.trim())), 
+      metode: metode, 
+      scrap_factor: Number(scrapFactor) / 100, 
+      h_cost: Number(hCost), 
+      s_cost: Number(sCost), 
+      lead_time: 1, 
+      teks_kendala: teksKendala 
+    };
+    const response = await axios.post(`${API_URL}/api/hitung-mrp-komprehensif`, payload);
+    if (response.data) {
       setMrpResult(response.data);
       setRekomendasiFinansial(''); 
-    } catch (e) { alert("❌ Kegagalan kalkulasi matrik algoritma MRP."); }
-    setIsCalculating(false);
-  };
+    }
+  } catch (e: any) { 
+    alert("❌ Kegagalan kalkulasi matrik algoritma MRP: " + (e.response?.data?.detail || e.message)); 
+  }
+  setIsCalculating(false);
+};
 
   const handleKirimWA = (bahan: string, plan_release: number[], hp: string) => {
     let msg = `*PURCHASE ORDER AUTOMATION SYSTEM*\n*CV SANDY GRAPHIA*\n\nYth. Vendor Logistik,\nKami merilis jadwal pengadaan material untuk *${bahan}*:\n`;
