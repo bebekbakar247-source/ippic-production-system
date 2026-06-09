@@ -18,7 +18,7 @@ export default function Home() {
   const [vendorList, setVendorList] = useState<any[]>([]);
 
   // Forecast Engine State
-  const [historiInput, setHistoriInput] = useState('100, 120, 115, 140, 130');
+  const [historiInput, setHistoriInput] = useState('120, 135, 125, 150, 140, 165, 155, 180, 170');
   const [metodeForecast, setMetodeForecast] = useState('Linear Regression');
   const [forecastResult, setForecastResult] = useState<any>(null);
   const [isForecasting, setIsForecasting] = useState(false);
