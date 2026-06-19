@@ -45,34 +45,45 @@ export default function Home() {
   const API_URL = 'https://raihanr247-ippic-backend-api.hf.space';
 
 const fetchDashboardData = async () => {
-    try {
-      const [rEws, rProd, rVend] = await Promise.all([
-        axios.get(`${API_URL}/api/dashboard-ews`),
-        axios.get(`${API_URL}/api/produk-jadi`),
-        axios.get(`${API_URL}/api/vendor-kontak`)
-      ]);
-      
-      // 1. Set Data EWS Dasbor
-      setEwsData(rEws.data); 
-      
-      // 2. PERISAI PRODUK JADI: Jangan timpa jika database merespon array kosong []
-      if (rProd.data && rProd.data.length > 0) {
-        setProdukJadi(rProd.data); 
-        setSelectedProduk(rProd.data[0].id_produk);
-      } else {
-        // Jika kosong, paksa pilih ID dari data dummy bawaan sistem
-        setSelectedProduk(produkJadi[0].id_produk);
-      }
+    let successCount = 0;
 
-      // 3. PERISAI VENDOR: Jangan timpa jika database vendor kosong []
+    // JALUR 1: Tarik Data Produk (Dropdown MRP)
+    try {
+      const rProd = await axios.get(`${API_URL}/api/produk-jadi`);
+      if (rProd.data && rProd.data.length > 0) {
+        // Cerdas membaca ID (apakah nama kolom di database 'id' atau 'id_produk')
+        const formattedProd = rProd.data.map((p: any) => ({
+          ...p, id_produk: p.id_produk || p.id
+        }));
+        setProdukJadi(formattedProd);
+        setSelectedProduk(formattedProd[0].id_produk);
+        successCount++;
+      }
+    } catch (e) { console.log("Gagal menarik data Produk Jadi"); }
+
+    // JALUR 2: Tarik Data EWS (Tabel Dashboard)
+    try {
+      const rEws = await axios.get(`${API_URL}/api/dashboard-ews`);
+      if (rEws.data && rEws.data.detail_kritis) {
+        setEwsData(rEws.data);
+        successCount++;
+      }
+    } catch (e) { console.log("Gagal menarik data EWS"); }
+
+    // JALUR 3: Tarik Data Vendor (WA Gateway)
+    try {
+      const rVend = await axios.get(`${API_URL}/api/vendor-kontak`);
       if (rVend.data && rVend.data.length > 0) {
         setVendorList(rVend.data);
+        successCount++;
       }
-      
+    } catch (e) { console.log("Gagal menarik data Vendor"); }
+
+    // Jika minimal ada 1 jalur yang berhasil, nyalakan lampu HIJAU!
+    if (successCount > 0) {
       setIsOnline(true);
-    } catch (e) { 
+    } else {
       setIsOnline(false);
-      console.log("Koneksi Backend Cloud terputus, menggunakan data internal.");
     }
   };
 
