@@ -36,23 +36,40 @@ export default function Home() {
 
   const [rekomendasiFinansial, setRekomendasiFinansial] = useState('');
   const [isAnalisis, setIsAnalisis] = useState(false);
+  const [isOnline, setIsOnline] = useState(false); //
 
   const API_URL = 'https://raihanr247-ippic-backend-api.hf.space';
 
-  const fetchDashboardData = async () => {
+const fetchDashboardData = async () => {
     try {
       const [rEws, rProd, rVend] = await Promise.all([
         axios.get(`${API_URL}/api/dashboard-ews`),
         axios.get(`${API_URL}/api/produk-jadi`),
         axios.get(`${API_URL}/api/vendor-kontak`)
       ]);
+      
+      // 1. Set Data EWS Dasbor
       setEwsData(rEws.data); 
-      setProdukJadi(rProd.data); 
-      setVendorList(rVend.data);
-      if (rProd.data.length > 0) {
+      
+      // 2. PERISAI PRODUK JADI: Jangan timpa jika database merespon array kosong []
+      if (rProd.data && rProd.data.length > 0) {
+        setProdukJadi(rProd.data); 
         setSelectedProduk(rProd.data[0].id_produk);
+      } else {
+        // Jika kosong, paksa pilih ID dari data dummy bawaan sistem
+        setSelectedProduk(produkJadi[0].id_produk);
       }
+
+      // 3. PERISAI VENDOR: Jangan timpa jika database vendor kosong []
+      if (rVend.data && rVend.data.length > 0) {
+        setVendorList(rVend.data);
+      }
+      
+      setIsOnline(true);
     } catch (e) { 
+      // PERISAI JARINGAN PUTUS
+      setSelectedProduk(produkJadi[0].id_produk);
+      setIsOnline(false);
       console.log("Menunggu sinkronisasi Backend Cloud..."); 
     }
   };
