@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { 
-  LayoutDashboard, Calculator, ScanBarcode, Package, AlertTriangle, 
+import {
+  LayoutDashboard, Calculator, ScanBarcode, Package, AlertTriangle,
   Menu, Bot, ChevronRight, TrendingUp, Smartphone, PieChart, CheckCircle2, DollarSign, RefreshCw
 } from 'lucide-react';
 
@@ -13,7 +13,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const [ewsData, setEwsData] = useState<any>({ total_item: 0, item_kritis: 0, detail_kritis: [] });
+  const [ewsData, setEwsData] = useState<any>({ total_item: 0, item_kritis: 0, detail_inventori: [] });
   const [produkJadi, setProdukJadi] = useState<any[]>([
     { id_produk: 1, kode_produk: "BJ-01", nama_produk: "Banner Flexi Standard 280gsm" },
     { id_produk: 2, kode_produk: "BJ-02", nama_produk: "Banner Flexi High-Res 340gsm" },
@@ -29,7 +29,7 @@ export default function Home() {
   const [selectedProduk, setSelectedProduk] = useState(1);
   const [kebutuhanKotor, setKebutuhanKotor] = useState('271, 272, 272, 272');
   const [metode, setMetode] = useState('L4L');
-  const [scrapFactor, setScrapFactor] = useState(5); 
+  const [scrapFactor, setScrapFactor] = useState(5);
   const [hCost, setHCost] = useState(2000);
   const [sCost, setSCost] = useState(50000);
   const [teksKendala, setTeksKendala] = useState('');
@@ -50,7 +50,7 @@ export default function Home() {
     let isConnected = false;
     try {
       const rEws = await axios.get(`${API_URL}/api/dashboard-ews`);
-      if (rEws.data && rEws.data.detail_kritis) { setEwsData(rEws.data); isConnected = true; }
+      if (rEws.data && rEws.data.detail_inventori) { setEwsData(rEws.data); isConnected = true; }
     } catch (e) { console.log("Gagal menarik data EWS"); }
 
     try {
@@ -73,11 +73,11 @@ export default function Home() {
             const res = await axios.post(`${API_URL}/api/scan-barcode`, { kode_produk: decodedText });
             if (res.data.status === 'sukses') {
               alert(`🖨️ KEDATANGAN LOGISTIK: ${res.data.pesan}`);
-              fetchDashboardData(); 
+              fetchDashboardData();
             } else { alert(`❌ GAGAL: ${res.data.pesan}`); }
           } catch (e) { alert("Kegagalan menghubungi server Cloud."); }
         },
-        (error) => {}
+        (error) => { }
       );
       return () => { scanner.clear().catch(e => console.log(e)); };
     }
@@ -93,7 +93,7 @@ export default function Home() {
       if (res.data.status === 'sukses') {
         alert(`✅ ${res.data.pesan}`);
         setJumlahProduksi(0);
-        fetchDashboardData(); 
+        fetchDashboardData();
       } else {
         alert(`❌ ${res.data.pesan}`);
       }
@@ -110,8 +110,8 @@ export default function Home() {
       const res = await axios.post(`${API_URL}/api/forecast`, payload);
 
       if (res.data && res.data.prediksi) {
-        const chartData = payload.histori_permintaan.map((val, i) => ({ minggu: `M-${i+1}`, aktual: val, prediksi: null }))
-          .concat(res.data.prediksi.map((val: number, i: number) => ({ minggu: `F-${i+1}`, aktual: null, prediksi: val })));
+        const chartData = payload.histori_permintaan.map((val, i) => ({ minggu: `M-${i + 1}`, aktual: val, prediksi: null }))
+          .concat(res.data.prediksi.map((val: number, i: number) => ({ minggu: `F-${i + 1}`, aktual: null, prediksi: val })));
         setForecastResult({ chart: chartData, insight: res.data.insight_ai });
         setKebutuhanKotor(res.data.prediksi.join(', '));
       }
@@ -126,7 +126,7 @@ export default function Home() {
       const response = await axios.post(`${API_URL}/api/hitung-mrp-komprehensif`, payload);
       if (response.data) {
         setMrpResult(response.data);
-        setRekomendasiFinansial(''); 
+        setRekomendasiFinansial('');
       }
     } catch (e: any) { alert("Terminal Logistik Sedang Memuat."); }
     setIsCalculating(false);
@@ -134,7 +134,7 @@ export default function Home() {
 
   const handleKirimWA = (bahan: string, plan_release: number[], hp: string) => {
     let msg = `*PURCHASE ORDER AUTOMATION SYSTEM*\n*CV SANDY GRAPHIA*\n\nYth. Vendor Logistik,\nKami merilis jadwal pengadaan material untuk *${bahan}*:\n`;
-    plan_release.forEach((qty, i) => { if(qty > 0) msg += `- Periode Minggu ${i+1}: *${qty} Unit*\n`; });
+    plan_release.forEach((qty, i) => { if (qty > 0) msg += `- Periode Minggu ${i + 1}: *${qty} Unit*\n`; });
     msg += `\nMohon pesanan segera dikonfirmasi dan diproses. Terima kasih.`;
     window.open(`https://wa.me/${hp}?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -181,16 +181,16 @@ export default function Home() {
         <header className="h-20 border-b border-zinc-800/80 flex items-center justify-between px-8 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-20">
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-zinc-400 hover:text-white bg-zinc-900/80 p-2.5 rounded-xl border border-zinc-800"><Menu size={20} /></button>
           <div className="flex items-center gap-4">
-            <button onClick={fetchDashboardData} className="flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-white bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800"><RefreshCw size={14}/> Sync Data</button>
+            <button onClick={fetchDashboardData} className="flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-white bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800"><RefreshCw size={14} /> Sync Data</button>
             <div className={`px-4 py-1.5 ${isOnline ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'} border rounded-full text-xs font-semibold flex items-center gap-2`}>
-              <span className="relative flex h-2 w-2"><span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`}></span></span> 
+              <span className="relative flex h-2 w-2"><span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`}></span></span>
               {isOnline ? 'Server Terhubung' : 'Mode Fallback'}
             </div>
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-8 md:p-10">
-          
+
           {activeTab === 'dashboard' && (
             <div className="space-y-8 animate-in fade-in duration-500">
               <div><h2 className="text-3xl font-black tracking-tight text-white">CV Sandy Graphia Control Room</h2><p className="text-zinc-400 mt-1">Pemantauan rantai pasok material produksi kertas dan tinta otomatis.</p></div>
@@ -203,10 +203,25 @@ export default function Home() {
                 <h3 className="text-lg font-bold mb-6">Tabel Kontrol Inventori Lapangan</h3>
                 <table className="w-full text-sm text-left"><thead className="text-xs text-zinc-500 uppercase bg-zinc-950/50"><tr><th className="px-6 py-4">Kode SKU</th><th className="px-6 py-4">Nama Material</th><th className="px-6 py-4 text-right">Stok Aktual</th><th className="px-6 py-4 text-right">Safety Stock</th><th className="px-6 py-4 text-center">Validasi Logistik</th></tr></thead>
                   <tbody className="divide-y divide-zinc-800/50">
-                    {ewsData?.detail_kritis.map((k:any, i:number) => (
-                      <tr key={i} className="hover:bg-zinc-800/30"><td className="px-6 py-5 font-mono text-zinc-400">{k.kode_produk}</td><td className="px-6 py-5 font-semibold text-zinc-200">{k.nama_produk}</td><td className="px-6 py-5 text-right font-bold text-red-400 text-base">{k.stok_aktual}</td><td className="px-6 py-5 text-right text-zinc-500">{k.safety_stock}</td><td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-xs font-bold uppercase">Restock Required</span></td></tr>
-                    ))}
-                    {ewsData?.item_kritis === 0 && <tr><td colSpan={5} className="text-center py-10 text-zinc-500">Seluruh komponen inventori pabrik tercukupi dengan aman.</td></tr>}
+                    {ewsData?.detail_inventori?.map((k: any, i: number) => {
+                      const isKritis = k.stok_aktual <= k.safety_stock;
+                      return (
+                        <tr key={i} className="hover:bg-zinc-800/30">
+                          <td className="px-6 py-5 font-mono text-zinc-400">{k.kode_produk}</td>
+                          <td className="px-6 py-5 font-semibold text-zinc-200">{k.nama_produk}</td>
+                          <td className={`px-6 py-5 text-right font-bold text-base ${isKritis ? 'text-red-400' : 'text-emerald-400'}`}>{k.stok_aktual}</td>
+                          <td className="px-6 py-5 text-right text-zinc-500">{k.safety_stock}</td>
+                          <td className="px-6 py-5 text-center">
+                            {isKritis ? (
+                              <span className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-xs font-bold uppercase">Restock Required</span>
+                            ) : (
+                              <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-bold uppercase">Stok Aman</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {ewsData?.detail_inventori?.length === 0 && <tr><td colSpan={5} className="text-center py-10 text-zinc-500">Memuat inventori...</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -215,7 +230,7 @@ export default function Home() {
               <div className="bg-blue-950/20 border border-blue-900/30 rounded-2xl p-6 mt-8 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div>
                   <h3 className="text-lg font-bold text-blue-400 flex items-center gap-2">
-                    <Package size={18}/> Real-Time Production Backflushing
+                    <Package size={18} /> Real-Time Production Backflushing
                   </h3>
                   <p className="text-zinc-400 text-xs mt-1">Potong stok bahan baku di gudang secara otomatis berdasarkan jumlah banner yang selesai dicetak.</p>
                 </div>
@@ -223,7 +238,7 @@ export default function Home() {
                   <select value={selectedProduk} onChange={(e) => setSelectedProduk(Number(e.target.value))} className="bg-zinc-950 border border-zinc-800 p-3 rounded-xl text-xs font-medium w-48 text-zinc-300">
                     {produkJadi.map(p => <option key={p.id_produk} value={p.id_produk}>{p.nama_produk}</option>)}
                   </select>
-                  <input type="number" value={jumlahProduksi} onChange={(e)=>setJumlahProduksi(Number(e.target.value))} placeholder="Qty" className="bg-zinc-950 border border-zinc-800 p-3 rounded-xl w-20 text-center font-bold text-sm" min="0" />
+                  <input type="number" value={jumlahProduksi} onChange={(e) => setJumlahProduksi(Number(e.target.value))} placeholder="Qty" className="bg-zinc-950 border border-zinc-800 p-3 rounded-xl w-20 text-center font-bold text-sm" min="0" />
                   <button onClick={handleEksekusiProduksi} disabled={isProducing} className="bg-blue-600 hover:bg-blue-500 px-5 py-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
                     {isProducing ? 'Memproses...' : 'Eksekusi & Potong Stok'}
                   </button>
@@ -240,9 +255,9 @@ export default function Home() {
               <div className="grid grid-cols-12 gap-8">
                 <div className="col-span-12 lg:col-span-4 bg-zinc-900/60 border border-zinc-800 p-8 rounded-3xl h-fit">
                   <label className="text-xs text-zinc-400 font-bold mb-2 block">HISTORI PENJUALAN (Separasi Koma)</label>
-                  <textarea value={historiInput} onChange={(e)=>setHistoriInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-white mb-4 h-24 font-mono text-sm" />
+                  <textarea value={historiInput} onChange={(e) => setHistoriInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-white mb-4 h-24 font-mono text-sm" />
                   <label className="text-xs text-zinc-400 font-bold mb-2 block">ALGORITMA INTELLIGENT</label>
-                  <select value={metodeForecast} onChange={(e)=>setMetodeForecast(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-emerald-400 font-bold mb-6">
+                  <select value={metodeForecast} onChange={(e) => setMetodeForecast(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-emerald-400 font-bold mb-6">
                     <option value="Linear Regression">Linear Regression (Garis Dasar)</option>
                     <option value="Holt Method">Holt Method (Analisis Tren Tanpa Musiman)</option>
                   </select>
@@ -252,9 +267,9 @@ export default function Home() {
                   {forecastResult ? (
                     <>
                       <h3 className="text-xl font-bold mb-6">Visualisasi Tren Pengadaan Masatama ({metodeForecast})</h3>
-                      <div className="flex-1 min-h-[300px]"><ResponsiveContainer><LineChart data={forecastResult.chart}><CartesianGrid strokeDasharray="3 3" stroke="#27272a"/><XAxis dataKey="minggu" stroke="#71717a"/><YAxis stroke="#71717a"/><Tooltip contentStyle={{backgroundColor:'#18181b', borderColor:'#27272a' }}/><Legend/><Line type="monotone" dataKey="aktual" stroke="#3b82f6" strokeWidth={3} name="Data Riil Penjualan"/><Line type="monotone" dataKey="prediksi" stroke="#10b981" strokeWidth={3} strokeDasharray="5 5" name="Proyeksi SCM"/></LineChart></ResponsiveContainer></div>
+                      <div className="flex-1 min-h-[300px]"><ResponsiveContainer><LineChart data={forecastResult.chart}><CartesianGrid strokeDasharray="3 3" stroke="#27272a" /><XAxis dataKey="minggu" stroke="#71717a" /><YAxis stroke="#71717a" /><Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a' }} /><Legend /><Line type="monotone" dataKey="aktual" stroke="#3b82f6" strokeWidth={3} name="Data Riil Penjualan" /><Line type="monotone" dataKey="prediksi" stroke="#10b981" strokeWidth={3} strokeDasharray="5 5" name="Proyeksi SCM" /></LineChart></ResponsiveContainer></div>
                       <div className="mt-8 bg-purple-900/10 border border-purple-500/20 p-6 rounded-2xl">
-                        <p className="text-purple-400 font-bold flex items-center gap-2 mb-2"><Bot size={16}/> Gemini Executive Strategic Insight</p><p className="text-zinc-200 text-sm leading-relaxed">{forecastResult.insight}</p>
+                        <p className="text-purple-400 font-bold flex items-center gap-2 mb-2"><Bot size={16} /> Gemini Executive Strategic Insight</p><p className="text-zinc-200 text-sm leading-relaxed">{forecastResult.insight}</p>
                       </div>
                     </>
                   ) : (<div className="flex-1 flex items-center justify-center text-zinc-600 font-medium">Sistem menunggu komparasi data historis lapangan...</div>)}
@@ -269,28 +284,28 @@ export default function Home() {
               <div className="grid grid-cols-12 gap-8">
                 <div className="col-span-12 lg:col-span-4 bg-zinc-900/60 border border-zinc-800 p-8 rounded-3xl h-fit space-y-6">
                   <div><label className="text-xs text-zinc-400 font-bold block mb-2">TARGET BARANG JADI</label><select value={selectedProduk} onChange={(e) => setSelectedProduk(Number(e.target.value))} className="w-full bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl font-medium">{produkJadi.map(p => <option key={p.id_produk} value={p.id_produk}>{p.nama_produk}</option>)}</select></div>
-                  <div><label className="text-xs text-zinc-400 font-bold block mb-2">GROSS REQUIREMENTS (MPS DATA)</label><input type="text" value={kebutuhanKotor} onChange={(e)=>setKebutuhanKotor(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl font-mono text-emerald-400 font-bold" /></div>
-                  <div className="grid grid-cols-2 gap-4"><div><label className="text-xs text-zinc-400 font-bold block mb-2">METODE LOT-SIZING</label><select value={metode} onChange={(e)=>setMetode(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl"><option value="L4L">L4L (Lot For Lot)</option><option value="EOQ">EOQ (Quantity Discount)</option><option value="POQ">POQ (Period Lotting)</option><option value="FPR">FPR (Fixed Period)</option></select></div><div><label className="text-xs text-zinc-400 font-bold block mb-2">ALLOWANCE SCRAP (%)</label><input type="number" value={scrapFactor} onChange={(e)=>setScrapFactor(Number(e.target.value))} className="w-full bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl" /></div></div>
-                  <div><label className="text-xs text-purple-400 font-bold flex items-center gap-2 mb-2"><Bot size={14}/> NATURAL LANGUAGE CONSTRAINT</label><textarea value={teksKendala} onChange={(e)=>setTeksKendala(e.target.value)} className="w-full bg-purple-950/10 border border-purple-900/30 p-3.5 rounded-xl h-24 text-sm" placeholder="Cth: Minggu 1 vendor libur" /></div>
+                  <div><label className="text-xs text-zinc-400 font-bold block mb-2">GROSS REQUIREMENTS (MPS DATA)</label><input type="text" value={kebutuhanKotor} onChange={(e) => setKebutuhanKotor(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl font-mono text-emerald-400 font-bold" /></div>
+                  <div className="grid grid-cols-2 gap-4"><div><label className="text-xs text-zinc-400 font-bold block mb-2">METODE LOT-SIZING</label><select value={metode} onChange={(e) => setMetode(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl"><option value="L4L">L4L (Lot For Lot)</option><option value="EOQ">EOQ (Quantity Discount)</option><option value="POQ">POQ (Period Lotting)</option><option value="FPR">FPR (Fixed Period)</option></select></div><div><label className="text-xs text-zinc-400 font-bold block mb-2">ALLOWANCE SCRAP (%)</label><input type="number" value={scrapFactor} onChange={(e) => setScrapFactor(Number(e.target.value))} className="w-full bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl" /></div></div>
+                  <div><label className="text-xs text-purple-400 font-bold flex items-center gap-2 mb-2"><Bot size={14} /> NATURAL LANGUAGE CONSTRAINT</label><textarea value={teksKendala} onChange={(e) => setTeksKendala(e.target.value)} className="w-full bg-purple-950/10 border border-purple-900/30 p-3.5 rounded-xl h-24 text-sm" placeholder="Cth: Minggu 1 vendor libur" /></div>
                   <button onClick={handleHitungMRP} className="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-xl font-bold shadow-lg">Kalkulasi Struktur Dinamis MRP</button>
                 </div>
-                
+
                 <div className="col-span-12 lg:col-span-8 bg-zinc-900/60 border border-zinc-800 p-8 rounded-3xl min-h-[600px]">
                   <h3 className="text-xl font-bold mb-6">Lembar Analisis Jadwal Induksi Material</h3>
-                  {!mrpResult ? <div className="h-[400px] flex items-center justify-center text-zinc-600"><Calculator size={64} className="opacity-20"/></div> : (
+                  {!mrpResult ? <div className="h-[400px] flex items-center justify-center text-zinc-600"><Calculator size={64} className="opacity-20" /></div> : (
                     <div className="space-y-8">
-                      <div className="bg-purple-950/10 p-4 rounded-xl border border-purple-900/30 text-purple-300 text-sm font-medium flex gap-2"><Bot size={18} className="shrink-0 mt-0.5"/> {mrpResult.pesan_ai}</div>
-                      {mrpResult.detail_mrp.map((h:any, i:number) => (
+                      <div className="bg-purple-950/10 p-4 rounded-xl border border-purple-900/30 text-purple-300 text-sm font-medium flex gap-2"><Bot size={18} className="shrink-0 mt-0.5" /> {mrpResult.pesan_ai}</div>
+                      {mrpResult.detail_mrp.map((h: any, i: number) => (
                         <div key={i} className="border border-zinc-800 rounded-2xl overflow-hidden bg-zinc-950/50">
                           <div className="bg-zinc-900 p-4 border-b border-zinc-800 flex justify-between items-center"><h4 className="text-emerald-400 font-black tracking-wide">{h.bahan_baku}</h4><span className="text-xs font-bold bg-zinc-800 border border-zinc-700 text-zinc-300 px-4 py-1.5 rounded-full">Total Cost: Rp {h.total_biaya.toLocaleString()}</span></div>
                           <div className="overflow-x-auto p-4">
                             <table className="w-full text-sm text-center">
-                              <thead className="text-xs text-zinc-500 border-b border-zinc-800/50"><tr><th className="text-left pb-3">Parameter Induk Logistik</th>{h.keb_kotor_bom.map((_:any, idx:number)=><th key={idx} className="pb-3">M-{idx+1}</th>)}</tr></thead>
+                              <thead className="text-xs text-zinc-500 border-b border-zinc-800/50"><tr><th className="text-left pb-3">Parameter Induk Logistik</th>{h.keb_kotor_bom.map((_: any, idx: number) => <th key={idx} className="pb-3">M-{idx + 1}</th>)}</tr></thead>
                               <tbody className="divide-y divide-zinc-800/30 font-mono text-xs">
-                                <tr><td className="text-left py-3.5 text-zinc-400 font-sans">Kebutuhan Kotor (+Scrap Allowance)</td>{h.keb_kotor_bom.map((v:any, idx:number)=><td key={idx} className="text-amber-400 font-bold">{v}</td>)}</tr>
-                                <tr><td className="text-left py-3.5 text-zinc-400 font-sans">Persediaan Tersisa (Projected Available)</td>{h.proj_avail.map((v:any, idx:number)=><td key={idx} className="text-zinc-400">{v}</td>)}</tr>
-                                <tr><td className="text-left py-3.5 text-zinc-400 font-sans">Jadwal Penerimaan Pesanan (Receipt)</td>{h.plan_receipt.map((v:any, idx:number)=><td key={idx} className="text-emerald-400 font-black">{v||'-'}</td>)}</tr>
-                                <tr className="bg-blue-950/20"><td className="text-left py-3.5 font-bold text-blue-400 font-sans">Pelepasan Rilis Pesanan (Release)</td>{h.plan_release.map((v:any, idx:number)=><td key={idx} className="text-blue-400 font-black">{v||'-'}</td>)}</tr>
+                                <tr><td className="text-left py-3.5 text-zinc-400 font-sans">Kebutuhan Kotor (+Scrap Allowance)</td>{h.keb_kotor_bom.map((v: any, idx: number) => <td key={idx} className="text-amber-400 font-bold">{v}</td>)}</tr>
+                                <tr><td className="text-left py-3.5 text-zinc-400 font-sans">Persediaan Tersisa (Projected Available)</td>{h.proj_avail.map((v: any, idx: number) => <td key={idx} className="text-zinc-400">{v}</td>)}</tr>
+                                <tr><td className="text-left py-3.5 text-zinc-400 font-sans">Jadwal Penerimaan Pesanan (Receipt)</td>{h.plan_receipt.map((v: any, idx: number) => <td key={idx} className="text-emerald-400 font-black">{v || '-'}</td>)}</tr>
+                                <tr className="bg-blue-950/20"><td className="text-left py-3.5 font-bold text-blue-400 font-sans">Pelepasan Rilis Pesanan (Release)</td>{h.plan_release.map((v: any, idx: number) => <td key={idx} className="text-blue-400 font-black">{v || '-'}</td>)}</tr>
                               </tbody>
                             </table>
                           </div>
@@ -308,17 +323,17 @@ export default function Home() {
               <h2 className="text-3xl font-black">WhatsApp Gateway SCM - CV Sandy Graphia</h2>
               {!mrpResult ? <p className="text-zinc-500">Selesaikan perhitungan MRP Engine terlebih dahulu.</p> : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {mrpResult.detail_mrp.map((h:any, i:number) => (
+                  {mrpResult.detail_mrp.map((h: any, i: number) => (
                     <div key={i} className="bg-zinc-900/60 border border-zinc-800 p-8 rounded-3xl flex flex-col justify-between">
                       <div>
                         <h3 className="text-xl font-bold text-white mb-2">{h.bahan_baku}</h3>
                         <div className="bg-zinc-950 p-4 rounded-xl font-mono text-xs text-zinc-400 border border-zinc-800/80 mb-6">
-                          {h.plan_release.map((qty:number, w:number) => qty > 0 && <p key={w} className="text-zinc-300"> minggu ke-{w+1} : <span className="text-emerald-400 font-bold">{qty} Unit</span></p>)}
+                          {h.plan_release.map((qty: number, w: number) => qty > 0 && <p key={w} className="text-zinc-300"> minggu ke-{w + 1} : <span className="text-emerald-400 font-bold">{qty} Unit</span></p>)}
                         </div>
                       </div>
                       <div className="space-y-2">
                         {vendorList.map(v => (
-                          <button key={v.id_vendor} onClick={() => handleKirimWA(h.bahan_baku, h.plan_release, v.nomor_whatsapp)} className="w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2"><Smartphone size={18}/> Transmit PO ke {v.nama_vendor}</button>
+                          <button key={v.id_vendor} onClick={() => handleKirimWA(h.bahan_baku, h.plan_release, v.nomor_whatsapp)} className="w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2"><Smartphone size={18} /> Transmit PO ke {v.nama_vendor}</button>
                         ))}
                       </div>
                     </div>
@@ -336,18 +351,18 @@ export default function Home() {
                   <div className="col-span-12 lg:col-span-4 bg-zinc-900/60 border border-zinc-800 p-8 rounded-3xl flex flex-col items-center justify-center text-center">
                     <div className="w-16 h-16 bg-emerald-950/40 border border-emerald-500/30 rounded-full flex items-center justify-center text-emerald-400 mb-4 font-bold text-xl">Rp</div>
                     <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-1">Total Biaya Komponen Terpilih</h3>
-                    <p className="text-4xl font-black text-emerald-400">Rp {mrpResult.detail_mrp.reduce((s:number, i:any)=> s + i.total_biaya, 0).toLocaleString('id-ID')}</p>
+                    <p className="text-4xl font-black text-emerald-400">Rp {mrpResult.detail_mrp.reduce((s: number, i: any) => s + i.total_biaya, 0).toLocaleString('id-ID')}</p>
                     <button onClick={mintaRekomendasiFinansial} disabled={isAnalisis} className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl mt-6 transition-all flex justify-center gap-2 shadow-md">{isAnalisis ? 'AI Mengaudit Kelayakan...' : 'Minta Hasil Audit Konsultan AI'}</button>
                   </div>
                   <div className="col-span-12 lg:col-span-8 bg-zinc-900/60 border border-zinc-800 p-8 rounded-3xl flex flex-col">
                     <h3 className="text-xl font-bold text-white mb-6">Grafik Komparasi Efisiensi Total Inventory Cost (4 Metode Sekaligus)</h3>
                     <div className="flex-1 min-h-[300px]">
-                      <ResponsiveContainer><BarChart data={mrpResult.perbandingan_ekotek} margin={{top: 10, right: 10, left: 10, bottom: 5}}><CartesianGrid strokeDasharray="3 3" stroke="#27272a"/><XAxis dataKey="bahan" stroke="#a1a1aa"/><YAxis stroke="#a1a1aa"/><Tooltip contentStyle={{backgroundColor:'#18181b', borderColor:'#27272a' }}/><Legend /><Bar dataKey="L4L" fill="#ef4444" name="Lot For Lot (L4L)" /><Bar dataKey="EOQ" fill="#10b981" name="Economic Order Qty (EOQ)" /><Bar dataKey="POQ" fill="#3b82f6" name="Period Order Qty (POQ)" /><Bar dataKey="FPR" fill="#f59e0b" name="Fixed Period (FPR)" /></BarChart></ResponsiveContainer>
+                      <ResponsiveContainer><BarChart data={mrpResult.perbandingan_ekotek} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="#27272a" /><XAxis dataKey="bahan" stroke="#a1a1aa" /><YAxis stroke="#a1a1aa" /><Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a' }} /><Legend /><Bar dataKey="L4L" fill="#ef4444" name="Lot For Lot (L4L)" /><Bar dataKey="EOQ" fill="#10b981" name="Economic Order Qty (EOQ)" /><Bar dataKey="POQ" fill="#3b82f6" name="Period Order Qty (POQ)" /><Bar dataKey="FPR" fill="#f59e0b" name="Fixed Period (FPR)" /></BarChart></ResponsiveContainer>
                     </div>
                   </div>
                   {rekomendasiFinansial && (
                     <div className="col-span-12 bg-purple-950/10 border border-purple-900/30 p-6 rounded-2xl border-l-4 border-l-purple-500">
-                      <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1.5 flex items-center gap-2"><Bot size={16}/> AI Manajerial Advisor Decision Support System</p>
+                      <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1.5 flex items-center gap-2"><Bot size={16} /> AI Manajerial Advisor Decision Support System</p>
                       <p className="text-zinc-200 text-sm leading-relaxed font-medium">{rekomendasiFinansial}</p>
                     </div>
                   )}
@@ -364,7 +379,7 @@ export default function Home() {
                   <div id="reader" className="w-full max-w-md bg-black rounded-2xl overflow-hidden border border-dashed border-emerald-500/40"></div>
                 </div>
                 <div className="col-span-12 lg:col-span-6 bg-zinc-900/60 border border-zinc-800 p-8 rounded-3xl flex flex-col justify-center">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><CheckCircle2 className="text-emerald-400"/> Sistem Validasi Gudang Otomatis</h3>
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><CheckCircle2 className="text-emerald-400" /> Sistem Validasi Gudang Otomatis</h3>
                   <p className="text-zinc-400 text-sm leading-relaxed">Jangan mengunggah foto statis. <b>Pilih "Scan using camera directly"</b> untuk menyalakan lensa kamera Anda, lalu arahkan layar HP yang menampilkan QR Code `BB-01` ke depan kamera tersebut.</p>
                 </div>
               </div>
