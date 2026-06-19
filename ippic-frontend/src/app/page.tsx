@@ -68,21 +68,42 @@ export default function Home() {
       const scanner = new Html5QrcodeScanner("reader", { qrbox: { width: 250, height: 250 }, fps: 5 }, false);
       scanner.render(
         async (decodedText) => {
-          scanner.clear().catch(e => console.log(e));
-          try {
-            const res = await axios.post(`${API_URL}/api/scan-barcode`, { kode_produk: decodedText });
-            if (res.data.status === 'sukses') {
-              alert(`🖨️ KEDATANGAN LOGISTIK: ${res.data.pesan}`);
-              fetchDashboardData();
-            } else { alert(`❌ GAGAL: ${res.data.pesan}`); }
-          } catch (e) { alert("Kegagalan menghubungi server Cloud."); }
+          // 1. Matikan kamera sementara agar tidak terscan 2 kali
+          scanner.clear().catch(e => console.log(e)); 
+          
+          // 2. Munculkan Pop-up Interaktif meminta "Surat Jalan / Delivery Order"
+          const inputQty = prompt(
+            `📦 BARCODE [${decodedText}] TERDETEKSI!\n\nCek Surat Jalan (Delivery Order) dari vendor.\nBerapa jumlah unit aktual yang baru masuk ke gudang hari ini?`, 
+            "0"
+          );
+          
+          // 3. Validasi angka yang dimasukkan pengguna
+          if (inputQty !== null && inputQty !== "" && !isNaN(Number(inputQty)) && Number(inputQty) > 0) {
+            try {
+              const res = await axios.post(`${API_URL}/api/scan-barcode`, { 
+                kode_produk: decodedText, 
+                jumlah_masuk: Number(inputQty) 
+              });
+              
+              if (res.data.status === 'sukses') {
+                alert(`✅ BERHASIL:\n${res.data.pesan}`);
+                fetchDashboardData(); // Refresh tabel EWS otomatis
+              } else { 
+                alert(`❌ GAGAL: ${res.data.pesan}`); 
+              }
+            } catch (e) { 
+              alert("Kegagalan menghubungi server API."); 
+            }
+          } else {
+            alert("⚠️ Validasi dibatalkan. Jumlah material tidak valid.");
+          }
         },
-        (error) => { }
+        (error) => {}
       );
       return () => { scanner.clear().catch(e => console.log(e)); };
     }
   }, [activeTab]);
-
+  
   // FUNGSI EKSEKUSI PRODUKSI (PEMOTONGAN STOK OTOMATIS)
   const handleEksekusiProduksi = async () => {
     if (jumlahProduksi <= 0) return alert("Masukkan jumlah hasil cetak yang valid!");
