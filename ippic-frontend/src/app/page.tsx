@@ -14,7 +14,11 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [ewsData, setEwsData] = useState<any>(null);
-  const [produkJadi, setProdukJadi] = useState<any[]>([]);
+  const [produkJadi, setProdukJadi] = useState<any[]>([
+  { id_produk: 1, kode_produk: "BJ-01", nama_produk: "Banner Flexi Standard 280gsm" },
+  { id_produk: 2, kode_produk: "BJ-02", nama_produk: "Banner Flexi High-Res 340gsm" },
+  { id_produk: 3, kode_produk: "BJ-03", nama_produk: "Banner Albatros Matte" }
+]);
   const [vendorList, setVendorList] = useState<any[]>([]);
 
   // Forecast Engine State - DATA DIPERPANJANG AGAR GRAFIK MELENGKUNG
@@ -24,7 +28,7 @@ export default function Home() {
   const [isForecasting, setIsForecasting] = useState(false);
 
   // MRP Optimization State
-  const [selectedProduk, setSelectedProduk] = useState('');
+  const [selectedProduk, setSelectedProduk] = useState(1);
   const [kebutuhanKotor, setKebutuhanKotor] = useState('271, 272, 272, 272');
   const [metode, setMetode] = useState('L4L');
   const [scrapFactor, setScrapFactor] = useState(5); 
@@ -67,10 +71,8 @@ const fetchDashboardData = async () => {
       
       setIsOnline(true);
     } catch (e) { 
-      // PERISAI JARINGAN PUTUS
-      setSelectedProduk(produkJadi[0].id_produk);
       setIsOnline(false);
-      console.log("Menunggu sinkronisasi Backend Cloud..."); 
+      console.log("Koneksi Backend Cloud terputus, menggunakan data internal.");
     }
   };
 
